@@ -956,7 +956,7 @@ const saveProduct = async () => {
           onClick={finishOrder}
           className="mt-6 rounded-2xl bg-emerald-500 px-6 py-4 font-semibold text-white hover:bg-emerald-600"
         >
-          Confirmar pedido
+          Confirmar pedido TESTE
         </button>
       </section>
 
