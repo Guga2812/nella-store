@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "../lib/supabase";
 import React, { useMemo, useState } from "react";
 import {
   Heart,
@@ -306,7 +307,45 @@ function SummaryCard({
 export default function NellaStore() {
   const [route, setRoute] = useState<RouteKey>("home");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [products, setProducts] = useState<Product[]>(productsSeed);
+  const [products, setProducts] = useState<Product[]>([]);
+useEffect(() => {
+  loadProducts();
+}, []);
+
+async function loadProducts() {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar produtos:", error);
+    return;
+  }
+
+  if (data) {
+    const mapped: Product[] = data.map((item: any) => ({
+      id: Number(item.id),
+      name: item.name,
+      category: item.category,
+      gender: item.gender,
+      age: item.age,
+      price: Number(item.price),
+      oldPrice: item.old_price ? Number(item.old_price) : undefined,
+      stock: Number(item.stock),
+      rating: Number(item.rating ?? 0),
+      reviews: Number(item.reviews ?? 0),
+      sizes: item.sizes ?? [],
+      colors: item.colors ?? [],
+      image: item.image,
+      description: item.description ?? "",
+      featured: item.featured ?? false,
+      isNew: item.is_new ?? false,
+    }));
+
+    setProducts(mapped);
+  }
+}
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
@@ -392,12 +431,64 @@ export default function NellaStore() {
     setCart((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   };
 
-  const finishOrder = () => {
-    if (!cart.length) return;
-    setOrderDone(true);
-    setCart([]);
-    setRoute("account");
-  };
+const finishOrder = async () => {
+  alert("URL: " + process.env.NEXT_PUBLIC_SUPABASE_URL);
+
+  if (!cart.length) {
+    alert("Carrinho vazio");
+    return;
+  }
+
+  const { data: orderData, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      customer_name: checkoutName,
+      customer_email: checkoutEmail,
+      customer_city: checkoutCity,
+      customer_address: checkoutAddress,
+      payment_method: paymentMethod,
+      subtotal: subtotal,
+      shipping: shipping,
+      total: total,
+      status: "pending",
+    })
+    .select()
+    .single();
+
+  if (orderError) {
+    alert("ERRO ORDER: " + orderError.message);
+    return;
+  }
+
+  alert("ORDER OK: " + JSON.stringify(orderData));
+
+  const itemsPayload = cart.map((item) => ({
+    order_id: orderData.id,
+    product_id: item.id,
+    product_name: item.name,
+    price: item.price,
+    quantity: item.qty,
+    size: item.size,
+    color: item.color,
+  }));
+
+  const { data: itemsData, error: itemsError } = await supabase
+    .from("order_items")
+    .insert(itemsPayload)
+    .select();
+
+  if (itemsError) {
+    alert("ERRO ITEMS: " + itemsError.message);
+    return;
+  }
+
+  alert("ITEMS OK: " + JSON.stringify(itemsData));
+
+  setOrderDone(true);
+  setCart([]);
+  setRoute("account");
+  alert("pedido criado com sucesso");
+};
 
   const saveNewsletter = () => {
     if (!newsletterEmail.trim()) return;
@@ -405,25 +496,45 @@ export default function NellaStore() {
     setNewsletterEmail("");
   };
 
-  const saveProduct = () => {
-    if (!adminForm.name || !adminForm.price) return;
+const saveProduct = async () => {
+  if (!adminForm.name || !adminForm.price) return;
 
-    const newProduct: Product = {
-      id: Date.now(),
-      name: adminForm.name,
-      category: adminForm.category,
-      gender: "Unissex",
-      age: "Bebê ao juvenil",
-      price: Number(adminForm.price),
-      stock: Number(adminForm.stock || 0),
-      rating: 4.5,
-      reviews: 0,
-      sizes: ["Único"],
-      colors: ["Padrão"],
-      image:
-        "https://images.unsplash.com/photo-1519238359922-989348752efb?auto=format&fit=crop&w=1200&q=80",
-      description: adminForm.description || "Novo produto cadastrado no painel.",
-    };
+  const { error } = await supabase.from("products").insert({
+    name: adminForm.name,
+    category: adminForm.category,
+    gender: "Unissex",
+    age: "Bebê ao juvenil",
+    price: Number(adminForm.price),
+    old_price: null,
+    stock: Number(adminForm.stock || 0),
+    rating: 4.5,
+    reviews: 0,
+    sizes: ["Único"],
+    colors: ["Padrão"],
+    image:
+      "https://images.unsplash.com/photo-1519238359922-989348752efb?auto=format&fit=crop&w=1200&q=80",
+    description: adminForm.description || "Novo produto cadastrado no painel.",
+    featured: false,
+    is_new: true,
+  });
+
+  if (error) {
+    console.error("Erro ao salvar produto:", error);
+    alert("Erro ao salvar produto.");
+    return;
+  }
+
+  setAdminForm({
+    name: "",
+    category: "Vestidos",
+    price: "",
+    stock: "",
+    description: "",
+  });
+
+  await loadProducts();
+  alert("Produto salvo com sucesso!");
+};
 
     setProducts((prev) => [newProduct, ...prev]);
     setAdminForm({
