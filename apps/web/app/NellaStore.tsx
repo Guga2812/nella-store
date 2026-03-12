@@ -478,22 +478,22 @@ export default function NellaStore() {
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              {[
-                ["Frete rápido", Truck],
-                ["Pagamento seguro", ShieldCheck],
-                ["Pix, crédito e débito", CreditCard],
-              ].map(([label, Icon]) => {
-                const Component = Icon as React.ComponentType<{ className?: string }>;
-                return (
-                  <div
-                    key={String(label)}
-                    className="flex items-center gap-3 rounded-2xl border border-rose-100 bg-white p-4 shadow-sm"
-                  >
-                    <Component className="h-5 w-5 text-rose-500" />
-                    <span className="text-sm text-slate-600">{label}</span>
-                  </div>
-                );
-              })}
+         {[
+  { label: "Frete rápido", icon: Truck },
+  { label: "Pagamento seguro", icon: ShieldCheck },
+  { label: "Pix, crédito e débito", icon: CreditCard },
+].map((item) => {
+  const Icon = item.icon;
+  return (
+    <div
+      key={item.label}
+      className="flex items-center gap-3 rounded-2xl border border-rose-100 bg-white p-4 shadow-sm"
+    >
+      <Icon className="h-5 w-5 text-rose-500" />
+      <span className="text-sm text-slate-600">{item.label}</span>
+    </div>
+  );
+})}
             </div>
           </div>
 
