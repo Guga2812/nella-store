@@ -1,7 +1,7 @@
 "use client";
 
 import { supabase } from "../lib/supabase";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Heart,
   Menu,
@@ -536,15 +536,6 @@ const saveProduct = async () => {
   alert("Produto salvo com sucesso!");
 };
 
-    setProducts((prev) => [newProduct, ...prev]);
-    setAdminForm({
-      name: "",
-      category: "Vestidos",
-      price: "",
-      stock: "",
-      description: "",
-    });
-  };
 
   const navItems = [
     { key: "home" as RouteKey, label: "Início" },
@@ -1162,7 +1153,7 @@ const saveProduct = async () => {
     </main>
   );
 
-  const body =
+  const currentPage =
     route === "home"
       ? renderHome()
       : route === "shop"
@@ -1268,7 +1259,7 @@ const saveProduct = async () => {
         ) : null}
       </header>
 
-      {body}
+      {currentPage}
 
       <footer className="mt-10 border-t border-rose-100 bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4 md:px-6">
